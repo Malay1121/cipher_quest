@@ -1,3 +1,4 @@
+// LocalStorage utilities for leaderboard
 const LEADERBOARD_KEY = 'cipherquest_leaderboard';
 
 export function getLeaderboard() {
@@ -23,6 +24,7 @@ export function saveScore(playerName, timeInSeconds, roomsCompleted) {
 
     leaderboard.push(newScore);
     
+    // Sort by rooms completed (desc), then by time (asc)
     leaderboard.sort((a, b) => {
       if (b.rooms !== a.rooms) {
         return b.rooms - a.rooms;
@@ -30,6 +32,7 @@ export function saveScore(playerName, timeInSeconds, roomsCompleted) {
       return a.time - b.time;
     });
 
+    // Keep only top 10 scores
     const topScores = leaderboard.slice(0, 10);
     localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(topScores));
     

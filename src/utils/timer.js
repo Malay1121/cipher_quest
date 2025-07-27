@@ -1,3 +1,4 @@
+// Timer utilities
 import React from 'react';
 
 export function formatTime(seconds) {

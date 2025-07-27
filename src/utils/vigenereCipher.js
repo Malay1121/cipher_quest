@@ -1,3 +1,4 @@
+// Vigenère Cipher utilities
 export function vigenereEncode(text, keyword) {
   const normalizedText = text.toUpperCase().replace(/[^A-Z]/g, '');
   const normalizedKeyword = keyword.toUpperCase();

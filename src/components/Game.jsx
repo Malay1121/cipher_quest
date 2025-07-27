@@ -16,7 +16,7 @@ const PUZZLES = [
 const Game = () => {
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(-1);
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
-  const [gameState, setGameState] = useState('waiting');
+  const [gameState, setGameState] = useState('waiting'); // waiting, playing, completed
   const [showHint, setShowHint] = useState(false);
   const [feedback, setFeedback] = useState({ isCorrect: false, isIncorrect: false });
   const [playerName, setPlayerName] = useState('');
@@ -24,6 +24,7 @@ const Game = () => {
   
   const timer = useTimer();
 
+  // Initialize first puzzle
   useEffect(() => {
     if (currentPuzzleIndex === -1) {
       startGame();
@@ -46,6 +47,7 @@ const Game = () => {
       setShowHint(false);
       setFeedback({ isCorrect: false, isIncorrect: false });
     } else {
+      // Game completed
       completeGame();
     }
   };
@@ -93,6 +95,7 @@ const Game = () => {
     saveScore(finalPlayerName, timer.seconds, currentPuzzleIndex);
     setShowNameInput(false);
     
+    // Show completion message
     setTimeout(() => {
       if (window.confirm('Game completed! Play again?')) {
         restartGame();
@@ -110,6 +113,7 @@ const Game = () => {
     setShowNameInput(false);
     timer.reset();
     
+    // Restart the game
     setTimeout(() => {
       startGame();
     }, 100);

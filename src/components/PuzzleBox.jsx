@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, SkipForward, Send } from 'lucide-react';
+import { Lightbulb, SkipForward, Send, Wrench } from 'lucide-react';
+import CipherTools from './CipherTools';
 
 const PuzzleBox = ({ 
   puzzle, 
@@ -13,6 +14,7 @@ const PuzzleBox = ({
 }) => {
   const [answer, setAnswer] = useState('');
   const [isShaking, setIsShaking] = useState(false);
+  const [showTools, setShowTools] = useState(false);
 
   useEffect(() => {
     if (isIncorrect) {
@@ -32,6 +34,10 @@ const PuzzleBox = ({
     if (answer.trim()) {
       onSubmit(answer.trim().toUpperCase());
     }
+  };
+
+  const handleToolResult = (result) => {
+    setAnswer(result);
   };
 
   const getRoomTitle = (type) => {
@@ -71,7 +77,6 @@ const PuzzleBox = ({
         isIncorrect ? 'shadow-lg shadow-red-500/30 border-red-500/30' : ''
       } ${isShaking ? 'animate-pulse' : ''}`}>
         
-        {/* Room Title */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-cyan-400 mb-2">
             {getRoomTitle(puzzle.type)}
@@ -81,7 +86,6 @@ const PuzzleBox = ({
           </div>
         </div>
 
-        {/* Cipher Display */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-300 mb-3">
             Decode this cipher:
@@ -103,7 +107,6 @@ const PuzzleBox = ({
           </div>
         )}
 
-        {/* Answer Input */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -119,12 +122,11 @@ const PuzzleBox = ({
             />
           </div>
 
-          {/* Control Buttons */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <button
               type="submit"
               disabled={!answer.trim()}
-              className="flex-1 min-w-[120px] flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              className="flex-1 min-w-[100px] flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
               <span>Submit</span>
@@ -133,7 +135,7 @@ const PuzzleBox = ({
             <button
               type="button"
               onClick={onHint}
-              className="flex items-center justify-center space-x-2 px-6 py-3 bg-[rgba(255,193,7,0.1)] hover:bg-[rgba(255,193,7,0.2)] border border-[rgba(255,193,7,0.3)] text-yellow-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20"
+              className="flex items-center justify-center space-x-2 px-4 py-3 bg-[rgba(255,193,7,0.1)] hover:bg-[rgba(255,193,7,0.2)] border border-[rgba(255,193,7,0.3)] text-yellow-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20"
             >
               <Lightbulb className="w-4 h-4" />
               <span>Hint</span>
@@ -142,13 +144,33 @@ const PuzzleBox = ({
             <button
               type="button"
               onClick={onSkip}
-              className="flex items-center justify-center space-x-2 px-6 py-3 bg-[rgba(255,107,107,0.1)] hover:bg-[rgba(255,107,107,0.2)] border border-[rgba(255,107,107,0.3)] text-red-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20"
+              className="flex items-center justify-center space-x-2 px-4 py-3 bg-[rgba(255,107,107,0.1)] hover:bg-[rgba(255,107,107,0.2)] border border-[rgba(255,107,107,0.3)] text-red-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20"
             >
               <SkipForward className="w-4 h-4" />
               <span>Skip</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowTools(!showTools)}
+              className={`flex items-center justify-center space-x-2 px-4 py-3 border font-semibold rounded-lg transition-all duration-300 ${
+                showTools 
+                  ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' 
+                  : 'bg-[rgba(147,51,234,0.1)] hover:bg-[rgba(147,51,234,0.2)] border-[rgba(147,51,234,0.3)] text-purple-400 hover:shadow-lg hover:shadow-purple-500/20'
+              }`}
+            >
+              <Wrench className="w-4 h-4" />
+              <span>Tools</span>
+            </button>
           </div>
         </form>
+
+        {showTools && (
+          <CipherTools 
+            puzzle={puzzle} 
+            onToolResult={handleToolResult}
+          />
+        )}
       </div>
     </div>
   );

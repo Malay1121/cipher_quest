@@ -8,7 +8,7 @@ const Leaderboard = ({ isOpen, onClose }) => {
   const handleClearLeaderboard = () => {
     if (window.confirm('Are you sure you want to clear all leaderboard data?')) {
       clearLeaderboard();
-      window.location.reload();
+      window.location.reload(); // Simple refresh to update the leaderboard
     }
   };
 

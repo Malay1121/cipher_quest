@@ -16,7 +16,7 @@ export function caesarDecode(text, shift) {
 }
 
 export function generateCaesarPuzzle(wordBank) {
-  const shift = Math.floor(Math.random() * 25) + 1;
+  const shift = Math.floor(Math.random() * 25) + 1; // 1-25
   const originalText = wordBank[Math.floor(Math.random() * wordBank.length)];
   const encodedText = caesarEncode(originalText, shift);
   

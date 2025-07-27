@@ -1,3 +1,4 @@
+// Word bank for cipher generation
 export const WORD_BANK = [
   'ESCAPE ROOM',
   'SECRET KEY',
