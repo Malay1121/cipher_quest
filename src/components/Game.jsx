@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PuzzleBox from './PuzzleBox';
+import MissionBriefing from './MissionBriefing';
 import { generateCaesarPuzzle } from '../utils/caesarCipher';
 import { generateVigenerePuzzle } from '../utils/vigenereCipher';
 import { generateSymbolPuzzle } from '../utils/symbolCipher';
 import { useTimer } from '../utils/timer';
 import { saveScore } from '../utils/storage';
 import { WORD_BANK } from '../utils/wordBank';
+import { getMissionForPuzzle, getCompletionMessage, getRandomAtmosphericMessage } from '../utils/narrative';
 
 const PUZZLES = [
   { type: 'caesar', generator: generateCaesarPuzzle },
@@ -21,6 +23,9 @@ const Game = () => {
   const [feedback, setFeedback] = useState({ isCorrect: false, isIncorrect: false });
   const [playerName, setPlayerName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false);
+  const [currentMission, setCurrentMission] = useState(null);
+  const [showMissionBriefing, setShowMissionBriefing] = useState(false);
+  const [atmosphericMessage, setAtmosphericMessage] = useState('');
   
   const timer = useTimer();
 
@@ -44,8 +49,23 @@ const Game = () => {
       const puzzleConfig = PUZZLES[puzzleIndex];
       const newPuzzle = puzzleConfig.generator(WORD_BANK);
       setCurrentPuzzle(newPuzzle);
+      
+      // Set mission for current puzzle
+      const mission = getMissionForPuzzle(puzzleIndex);
+      setCurrentMission(mission);
+      
+      // Show mission briefing for new missions
+      if (mission && puzzleIndex > 0) {
+        setShowMissionBriefing(true);
+      }
+      
       setShowHint(false);
       setFeedback({ isCorrect: false, isIncorrect: false });
+      
+      // Set atmospheric message
+      if (puzzleIndex > 0) {
+        setAtmosphericMessage(getRandomAtmosphericMessage('progress'));
+      }
     } else {
       // Game completed
       completeGame();
@@ -65,6 +85,12 @@ const Game = () => {
     
     if (isCorrect) {
       setFeedback({ isCorrect: true, isIncorrect: false });
+      
+      // Show completion message
+      const completionMsg = getCompletionMessage(currentPuzzleIndex);
+      if (completionMsg) {
+        setAtmosphericMessage(completionMsg.message);
+      }
       
       setTimeout(() => {
         const nextIndex = currentPuzzleIndex + 1;
@@ -111,6 +137,9 @@ const Game = () => {
     setFeedback({ isCorrect: false, isIncorrect: false });
     setPlayerName('');
     setShowNameInput(false);
+    setCurrentMission(null);
+    setShowMissionBriefing(false);
+    setAtmosphericMessage('');
     timer.reset();
     
     // Restart the game
@@ -122,10 +151,59 @@ const Game = () => {
   if (gameState === 'waiting') {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <PuzzleBox 
-          puzzle={null}
-          timer={timer.formattedTime}
-        />
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.15)] backdrop-blur-md rounded-xl p-8 text-center">
+            {/* Game Logo */}
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-black font-bold text-2xl">C</span>
+              </div>
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                CipherQuest
+              </h2>
+              <p className="text-cyan-400 text-sm font-medium">Operation: Digital Infiltration</p>
+            </div>
+
+            {/* Mission Overview */}
+            <div className="bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.1)] rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-2">Mission Brief</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                You are Agent Cipher, tasked with infiltrating a secure digital facility. 
+                Each room contains encrypted intelligence that must be decoded to progress deeper into the system.
+              </p>
+            </div>
+
+            {/* Objectives */}
+            <div className="text-left mb-6">
+              <h4 className="text-sm font-semibold text-cyan-400 mb-3">PRIMARY OBJECTIVES:</h4>
+              <div className="space-y-2 text-sm text-gray-300">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                  <span>Breach Security Checkpoint Alpha (Caesar Cipher)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                  <span>Access Central Database (Vigenère Cipher)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                  <span>Override Vault Protocol (Symbol Substitution)</span>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => {
+                const firstMission = getMissionForPuzzle(0);
+                setCurrentMission(firstMission);
+                setShowMissionBriefing(true);
+              }}
+              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105"
+            >
+              Accept Mission
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -171,8 +249,32 @@ const Game = () => {
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
+      {/* Mission Briefing Modal */}
+      <MissionBriefing 
+        mission={currentMission}
+        isVisible={showMissionBriefing}
+        onClose={() => {
+          setShowMissionBriefing(false);
+          if (gameState === 'waiting') {
+            startGame();
+          }
+        }}
+      />
+
+      {/* Atmospheric Message */}
+      {atmosphericMessage && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 animate-in slide-in-from-top-2 duration-500">
+          <div className="bg-[rgba(0,0,0,0.9)] border border-cyan-500/30 backdrop-blur-md rounded-lg px-4 py-2 max-w-md">
+            <p className="text-cyan-300 text-sm text-center font-medium">
+              {atmosphericMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
       <PuzzleBox
         puzzle={currentPuzzle}
+        mission={currentMission}
         onSubmit={handleSubmit}
         onSkip={handleSkip}
         onHint={handleHint}

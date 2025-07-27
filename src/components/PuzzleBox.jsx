@@ -4,6 +4,7 @@ import CipherTools from './CipherTools';
 
 const PuzzleBox = ({ 
   puzzle, 
+  mission,
   onSubmit, 
   onSkip, 
   onHint, 
@@ -42,33 +43,14 @@ const PuzzleBox = ({
 
   const getRoomTitle = (type) => {
     switch (type) {
-      case 'caesar': return 'Room 1: Caesar Cipher';
-      case 'vigenere': return 'Room 2: Vigenère Cipher';
-      case 'symbol': return 'Room 3: Symbol Substitution';
+      case 'caesar': return 'Security Checkpoint Alpha';
+      case 'vigenere': return 'Central Database Access';
+      case 'symbol': return 'Vault Protocol Override';
       default: return 'Mystery Room';
     }
   };
 
-  if (!puzzle) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.15)] backdrop-blur-md rounded-xl p-8 text-center">
-          <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            Welcome to CipherQuest
-          </h2>
-          <p className="text-gray-300 mb-6">
-            Decode the ciphers to escape each room. Are you ready to begin?
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105"
-          >
-            Start Game
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!puzzle) return null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -77,20 +59,44 @@ const PuzzleBox = ({
         isIncorrect ? 'shadow-lg shadow-red-500/30 border-red-500/30' : ''
       } ${isShaking ? 'animate-pulse' : ''}`}>
         
+        {/* Mission Header */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-cyan-400 mb-2">
+          <div className="flex items-center justify-center space-x-2 mb-2">
+            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+            <span className="text-xs text-cyan-400 font-medium tracking-wider">ACTIVE MISSION</span>
+            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+          </div>
+          <h2 className="text-lg font-bold text-white mb-1">
             {getRoomTitle(puzzle.type)}
           </h2>
+          {mission && (
+            <p className="text-sm text-gray-400 mb-3">
+              {mission.location}
+            </p>
+          )}
           <div className="text-sm text-gray-400">
+            <span className="text-cyan-300">Agent Status:</span> Active • 
             Time: <span className="font-mono text-cyan-300">{timer}</span>
           </div>
         </div>
 
+        {/* Mission Objective Reminder */}
+        {mission && (
+          <div className="bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 mb-4">
+            <p className="text-xs text-gray-400 mb-1">CURRENT OBJECTIVE:</p>
+            <p className="text-sm text-cyan-300 font-medium">{mission.objective}</p>
+          </div>
+        )}
+
+        {/* Cipher Display */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-300 mb-3">
-            Decode this cipher:
+            Encrypted Intelligence:
           </label>
-          <div className="bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.1)] rounded-lg p-4 font-mono text-lg text-center letter-spacing-wide">
+          <div className="bg-[rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.1)] rounded-lg p-4 font-mono text-lg text-center letter-spacing-wide relative">
+            <div className="absolute top-2 right-2">
+              <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+            </div>
             <span className="text-cyan-100 break-all">
               {puzzle.encoded}
             </span>
@@ -100,28 +106,33 @@ const PuzzleBox = ({
         {/* Hint Display */}
         {showHint && (
           <div className="mb-6 p-4 bg-[rgba(255,193,7,0.1)] border border-[rgba(255,193,7,0.3)] rounded-lg">
-            <div className="flex items-start space-x-2">
+            <div className="flex items-start space-x-3">
               <Lightbulb className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-              <p className="text-yellow-200 text-sm">{puzzle.hint}</p>
+              <div>
+                <p className="text-xs text-yellow-400 font-medium mb-1">INTELLIGENCE BRIEFING:</p>
+                <p className="text-yellow-200 text-sm">{puzzle.hint}</p>
+              </div>
             </div>
           </div>
         )}
 
+        {/* Answer Input */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Your answer:
+              Decryption Result:
             </label>
             <input
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               className="w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.15)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent font-mono text-lg"
-              placeholder="Enter decoded message..."
+              placeholder="Enter decrypted intelligence..."
               autoComplete="off"
             />
           </div>
 
+          {/* Control Buttons */}
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
@@ -129,7 +140,7 @@ const PuzzleBox = ({
               className="flex-1 min-w-[100px] flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
-              <span>Submit</span>
+              <span>Transmit</span>
             </button>
 
             <button
@@ -138,7 +149,7 @@ const PuzzleBox = ({
               className="flex items-center justify-center space-x-2 px-4 py-3 bg-[rgba(255,193,7,0.1)] hover:bg-[rgba(255,193,7,0.2)] border border-[rgba(255,193,7,0.3)] text-yellow-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20"
             >
               <Lightbulb className="w-4 h-4" />
-              <span>Hint</span>
+              <span>Intel</span>
             </button>
 
             <button
@@ -147,7 +158,7 @@ const PuzzleBox = ({
               className="flex items-center justify-center space-x-2 px-4 py-3 bg-[rgba(255,107,107,0.1)] hover:bg-[rgba(255,107,107,0.2)] border border-[rgba(255,107,107,0.3)] text-red-400 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20"
             >
               <SkipForward className="w-4 h-4" />
-              <span>Skip</span>
+              <span>Bypass</span>
             </button>
 
             <button
@@ -160,11 +171,12 @@ const PuzzleBox = ({
               }`}
             >
               <Wrench className="w-4 h-4" />
-              <span>Tools</span>
+              <span>Decrypt</span>
             </button>
           </div>
         </form>
 
+        {/* Cipher Tools */}
         {showTools && (
           <CipherTools 
             puzzle={puzzle} 

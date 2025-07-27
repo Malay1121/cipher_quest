@@ -1,3 +1,4 @@
+// Caesar Cipher utilities
 export function caesarEncode(text, shift) {
   return text
     .toUpperCase()
@@ -24,7 +25,7 @@ export function generateCaesarPuzzle(wordBank) {
     type: 'caesar',
     encoded: encodedText,
     answer: originalText,
-    hint: `This is a Caesar cipher. Each letter is shifted by ${shift} positions in the alphabet.`,
+    hint: `Intelligence suggests this is a Caesar cipher. Each letter has been shifted by ${shift} positions in the alphabet. Try frequency analysis or systematic shifting.`,
     shift
   };
 }

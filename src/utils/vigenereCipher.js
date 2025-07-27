@@ -37,7 +37,7 @@ export function generateVigenerePuzzle(wordBank) {
     type: 'vigenere',
     encoded: encodedText,
     answer: originalText,
-    hint: `This is a Vigenère cipher using the keyword: ${keyword}`,
+    hint: `Intelligence indicates this is a Vigenère cipher. The keyword appears to be: ${keyword}. Look for repeating patterns to determine keyword length.`,
     keyword
   };
 }

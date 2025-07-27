@@ -48,7 +48,7 @@ export function generateSymbolPuzzle(wordBank) {
     type: 'symbol',
     encoded: encodedText,
     answer: originalText,
-    hint: 'This is a symbol substitution cipher. Each letter is replaced with a unique symbol.',
+    hint: 'Intelligence confirms this is a symbol substitution cipher. Each letter has been replaced with a unique symbol. Use frequency analysis - the most common symbol likely represents E or T.',
     mapping,
     reverseMapping
   };

@@ -204,6 +204,7 @@ const CipherTools = ({ puzzle, onToolResult }) => {
         <h3 className="text-sm font-semibold text-cyan-400">Cipher Tools</h3>
       </div>
 
+      {/* Tool Tabs */}
       <div className="flex space-x-2 mb-4">
         {availableTools.includes('frequency') && (
           <button
@@ -246,6 +247,7 @@ const CipherTools = ({ puzzle, onToolResult }) => {
         )}
       </div>
 
+      {/* Tool Content */}
       <div className="min-h-[200px]">
         {activeTab === 'frequency' && renderFrequencyTool()}
         {activeTab === 'caesar' && renderCaesarTool()}
