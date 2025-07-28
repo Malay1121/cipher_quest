@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trophy, Clock, Target, Calendar, Trash2 } from 'lucide-react';
+import { X, Trophy, Clock, Target, Calendar, Trash2, Star, Lightbulb, SkipForward } from 'lucide-react';
 import { getLeaderboard, clearLeaderboard } from '../utils/storage';
 
 const Leaderboard = ({ isOpen, onClose }) => {
@@ -8,7 +8,7 @@ const Leaderboard = ({ isOpen, onClose }) => {
   const handleClearLeaderboard = () => {
     if (window.confirm('Are you sure you want to clear all leaderboard data?')) {
       clearLeaderboard();
-      window.location.reload(); // Simple refresh to update the leaderboard
+      window.location.reload();
     }
   };
 
@@ -27,7 +27,6 @@ const Leaderboard = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-[rgba(14,14,14,0.95)] border border-[rgba(255,255,255,0.15)] backdrop-blur-md rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[rgba(255,255,255,0.1)]">
           <div className="flex items-center space-x-3">
             <Trophy className="w-6 h-6 text-yellow-400" />
@@ -54,7 +53,6 @@ const Leaderboard = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6">
           {scores.length === 0 ? (
             <div className="text-center py-12">
@@ -96,6 +94,12 @@ const Leaderboard = ({ isOpen, onClose }) => {
                         <p className="font-semibold text-white">
                           {score.playerName}
                         </p>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Star className="w-3 h-3 text-yellow-400" />
+                          <span className="text-yellow-400 font-bold text-sm">
+                            {(score.score || 0).toLocaleString()} pts
+                          </span>
+                        </div>
                         <div className="flex items-center space-x-4 text-sm text-gray-400">
                           <div className="flex items-center space-x-1">
                             <Target className="w-3 h-3" />
@@ -105,6 +109,18 @@ const Leaderboard = ({ isOpen, onClose }) => {
                             <Clock className="w-3 h-3" />
                             <span>{formatTime(score.time)}</span>
                           </div>
+                          {score.stats && (
+                            <>
+                              <div className="flex items-center space-x-1">
+                                <Lightbulb className="w-3 h-3" />
+                                <span>{score.stats.hintsUsed} hints</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <SkipForward className="w-3 h-3" />
+                                <span>{score.stats.puzzlesSkipped} skips</span>
+                              </div>
+                            </>
+                          )}
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-3 h-3" />
                             <span>{formatDate(score.date)}</span>

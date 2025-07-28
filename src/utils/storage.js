@@ -24,8 +24,11 @@ export function saveScore(playerName, timeInSeconds, roomsCompleted) {
 
     leaderboard.push(newScore);
     
-    // Sort by rooms completed (desc), then by time (asc)
+    // Sort by score (desc), then by rooms completed (desc), then by time (asc)
     leaderboard.sort((a, b) => {
+      if (b.score !== a.score) {
+        return (b.score || 0) - (a.score || 0);
+      }
       if (b.rooms !== a.rooms) {
         return b.rooms - a.rooms;
       }

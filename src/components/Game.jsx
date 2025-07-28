@@ -28,6 +28,12 @@ const Game = () => {
   const [atmosphericMessage, setAtmosphericMessage] = useState('');
   const [showMissionComplete, setShowMissionComplete] = useState(false);
   const [missionStatus, setMissionStatus] = useState([]);
+  const [gameStats, setGameStats] = useState({
+    hintsUsed: 0,
+    puzzlesSkipped: 0,
+    puzzlesSolved: 0,
+    totalScore: 0
+  });
   
   const timer = useTimer();
 
@@ -42,6 +48,12 @@ const Game = () => {
     setCurrentPuzzleIndex(0);
     setGameState('playing');
     setMissionStatus([]);
+    setGameStats({
+      hintsUsed: 0,
+      puzzlesSkipped: 0,
+      puzzlesSolved: 0,
+      totalScore: 0
+    });
     timer.reset();
     timer.start();
     generateNextPuzzle(0);
@@ -75,8 +87,43 @@ const Game = () => {
     }
   };
 
+  const calculateScore = () => {
+    const basePointsPerPuzzle = 1000;
+    const speedBonusThreshold = 120; // 2 minutes per puzzle
+    const hintPenalty = 100;
+    const skipPenalty = 500;
+    
+    let totalScore = 0;
+    
+    // Base points for solved puzzles
+    totalScore += gameStats.puzzlesSolved * basePointsPerPuzzle;
+    
+    // Speed bonus calculation
+    const averageTimePerPuzzle = timer.seconds / PUZZLES.length;
+    if (averageTimePerPuzzle < speedBonusThreshold) {
+      const speedBonus = Math.floor((speedBonusThreshold - averageTimePerPuzzle) * 10);
+      totalScore += speedBonus;
+    }
+    
+    // Time bonus for overall completion
+    const maxTime = 900; // 15 minutes
+    if (timer.seconds < maxTime) {
+      const timeBonus = Math.floor((maxTime - timer.seconds) * 2);
+      totalScore += timeBonus;
+    }
+    
+    // Penalties
+    totalScore -= gameStats.hintsUsed * hintPenalty;
+    totalScore -= gameStats.puzzlesSkipped * skipPenalty;
+    
+    // Ensure minimum score of 0
+    return Math.max(0, totalScore);
+  };
+
   const completeGame = () => {
     timer.stop();
+    const finalScore = calculateScore();
+    setGameStats(prev => ({ ...prev, totalScore: finalScore }));
     setGameState('completed');
     setShowMissionComplete(true);
     setAtmosphericMessage('MISSION ACCOMPLISHED - ALL OBJECTIVES COMPLETE');
@@ -117,6 +164,8 @@ const Game = () => {
   };
 
   const handleSkip = () => {
+    setGameStats(prev => ({ ...prev, puzzlesSkipped: prev.puzzlesSkipped + 1 }));
+    
     setMissionStatus(prev => {
       const newStatus = [...prev];
       newStatus[currentPuzzleIndex] = 'BYPASSED';
@@ -131,12 +180,13 @@ const Game = () => {
   };
 
   const handleHint = () => {
+    setGameStats(prev => ({ ...prev, hintsUsed: prev.hintsUsed + 1 }));
     setShowHint(true);
   };
 
   const handleSaveScore = () => {
     const finalPlayerName = playerName.trim() || 'Anonymous';
-    saveScore(finalPlayerName, timer.seconds, currentPuzzleIndex);
+    saveScore(finalPlayerName, timer.seconds, currentPuzzleIndex, gameStats.totalScore, gameStats);
     setShowNameInput(false);
     setShowMissionComplete(false);
     
@@ -161,6 +211,12 @@ const Game = () => {
     setAtmosphericMessage('');
     setShowMissionComplete(false);
     setMissionStatus([]);
+    setGameStats({
+      hintsUsed: 0,
+      puzzlesSkipped: 0,
+      puzzlesSolved: 0,
+      totalScore: 0
+    });
     timer.reset();
     
     // Restart the game
@@ -273,6 +329,35 @@ const Game = () => {
                     </div>
                     <div className="text-sm text-gray-400">Performance</div>
                     <div className="text-sm text-gray-400">Rating</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 bg-[rgba(255,255,255,0.03)] rounded-lg p-4">
+                  <h4 className="text-lg font-bold text-yellow-400 mb-3 text-center">MISSION SCORE</h4>
+                  <div className="text-center mb-4">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                      {gameStats.totalScore.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-400">Total Points</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+                    <div>
+                      <div className="text-green-400 font-bold">{gameStats.puzzlesSolved}</div>
+                      <div className="text-gray-500">Solved</div>
+                    </div>
+                    <div>
+                      <div className="text-yellow-400 font-bold">{gameStats.puzzlesSkipped}</div>
+                      <div className="text-gray-500">Skipped</div>
+                    </div>
+                    <div>
+                      <div className="text-orange-400 font-bold">{gameStats.hintsUsed}</div>
+                      <div className="text-gray-500">Hints</div>
+                    </div>
+                    <div>
+                      <div className="text-cyan-400 font-bold">{Math.floor(timer.seconds / 60)}m {timer.seconds % 60}s</div>
+                      <div className="text-gray-500">Time</div>
+                    </div>
                   </div>
                 </div>
               </div>
