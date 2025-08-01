@@ -39,16 +39,31 @@ export function symbolDecode(text, reverseMapping) {
     .join('');
 }
 
-export function generateSymbolPuzzle(wordBank) {
+export function generateSymbolPuzzle(wordBank, difficultyLevel = 1) {
   const { mapping, reverseMapping } = generateSymbolMapping();
-  const originalText = wordBank[Math.floor(Math.random() * wordBank.length)];
+  
+  // Filter words by difficulty level
+  const filteredWords = wordBank.filter(word => {
+    const wordLength = word.replace(/\s/g, '').length;
+    if (difficultyLevel <= 2) return wordLength <= 10;
+    if (difficultyLevel <= 4) return wordLength >= 8 && wordLength <= 16;
+    return wordLength >= 12;
+  });
+  
+  const availableWords = filteredWords.length > 0 ? filteredWords : wordBank;
+  const originalText = availableWords[Math.floor(Math.random() * availableWords.length)];
   const encodedText = symbolEncode(originalText, mapping);
   
   return {
     type: 'symbol',
+    difficulty: difficultyLevel,
     encoded: encodedText,
     answer: originalText,
-    hint: 'Intelligence confirms this is a symbol substitution cipher. Each letter has been replaced with a unique symbol. Use frequency analysis - the most common symbol likely represents E or T.',
+    hint: difficultyLevel <= 2
+      ? 'Intelligence confirms this is a symbol substitution cipher. Each letter has been replaced with a unique symbol. Use frequency analysis - the most common symbol likely represents E or T.'
+      : difficultyLevel <= 3
+      ? 'Advanced symbol substitution detected. Apply frequency analysis and pattern recognition. Look for single-symbol words and common letter combinations.'
+      : 'Complex symbolic encryption identified. Utilize advanced cryptanalytic techniques including frequency analysis, pattern matching, and linguistic structure analysis.',
     mapping,
     reverseMapping
   };

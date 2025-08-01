@@ -9,15 +9,19 @@ import { saveScore } from '../utils/storage';
 import { WORD_BANK } from '../utils/wordBank';
 import { getMissionForPuzzle, getCompletionMessage, getRandomAtmosphericMessage } from '../utils/narrative';
 
-const PUZZLES = [
-  { type: 'caesar', generator: generateCaesarPuzzle },
-  { type: 'vigenere', generator: generateVigenerePuzzle },
-  { type: 'symbol', generator: generateSymbolPuzzle }
-];
+const CIPHER_GENERATORS = {
+  caesar: generateCaesarPuzzle,
+  vigenere: generateVigenerePuzzle,
+  symbol: generateSymbolPuzzle
+};
+
+const CIPHER_TYPES = ['caesar', 'vigenere', 'symbol'];
 
 const Game = () => {
-  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(-1);
+  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
+  const [puzzleQueue, setPuzzleQueue] = useState([]);
+  const [currentDifficultyLevel, setCurrentDifficultyLevel] = useState(1);
   const [gameState, setGameState] = useState('waiting'); // waiting, playing, completed
   const [showHint, setShowHint] = useState(false);
   const [feedback, setFeedback] = useState({ isCorrect: false, isIncorrect: false });
@@ -39,13 +43,27 @@ const Game = () => {
 
   // Initialize first puzzle
   useEffect(() => {
-    if (currentPuzzleIndex === -1) {
+    if (gameState === 'waiting' && puzzleQueue.length === 0) {
       startGame();
     }
-  }, []);
+  }, [gameState, puzzleQueue.length]);
+
+  const generatePuzzleBatch = (difficultyLevel, batchSize = 6) => {
+    const newPuzzles = [];
+    for (let i = 0; i < batchSize; i++) {
+      const cipherType = CIPHER_TYPES[Math.floor(Math.random() * CIPHER_TYPES.length)];
+      const generator = CIPHER_GENERATORS[cipherType];
+      const puzzle = generator(WORD_BANK, difficultyLevel);
+      newPuzzles.push(puzzle);
+    }
+    return newPuzzles;
+  };
 
   const startGame = () => {
+    const initialPuzzles = generatePuzzleBatch(1, 6);
+    setPuzzleQueue(initialPuzzles);
     setCurrentPuzzleIndex(0);
+    setCurrentDifficultyLevel(1);
     setGameState('playing');
     setMissionStatus([]);
     setGameStats({
@@ -56,21 +74,37 @@ const Game = () => {
     });
     timer.reset();
     timer.start();
-    generateNextPuzzle(0);
+    setCurrentPuzzle(initialPuzzles[0]);
+    
+    // Set mission for first puzzle
+    const mission = getMissionForPuzzle(0);
+    setCurrentMission(mission);
   };
 
   const generateNextPuzzle = (puzzleIndex) => {
-    if (puzzleIndex < PUZZLES.length) {
-      const puzzleConfig = PUZZLES[puzzleIndex];
-      const newPuzzle = puzzleConfig.generator(WORD_BANK);
-      setCurrentPuzzle(newPuzzle);
+    // Check if we need to generate more puzzles
+    if (puzzleIndex >= puzzleQueue.length - 1) {
+      const newBatch = generatePuzzleBatch(currentDifficultyLevel, 3);
+      setPuzzleQueue(prev => [...prev, ...newBatch]);
+    }
+    
+    // Check if game should end (after completing enough puzzles)
+    if (puzzleIndex >= 15) { // End after 15 puzzles instead of fixed 3
+      completeGame();
+      return;
+    }
+    
+    const nextPuzzle = puzzleQueue[puzzleIndex];
+    if (nextPuzzle) {
+      setCurrentPuzzle(nextPuzzle);
       
-      // Set mission for current puzzle
-      const mission = getMissionForPuzzle(puzzleIndex);
+      // Set mission based on puzzle index (cycle through missions)
+      const missionIndex = puzzleIndex % 3;
+      const mission = getMissionForPuzzle(missionIndex);
       setCurrentMission(mission);
       
-      // Show mission briefing for new missions
-      if (mission && puzzleIndex > 0) {
+      // Show mission briefing for new mission types
+      if (mission && puzzleIndex > 0 && puzzleIndex % 5 === 0) {
         setShowMissionBriefing(true);
       }
       
@@ -81,9 +115,6 @@ const Game = () => {
       if (puzzleIndex > 0) {
         setAtmosphericMessage(getRandomAtmosphericMessage('progress'));
       }
-    } else {
-      // Game completed
-      completeGame();
     }
   };
 
@@ -99,7 +130,7 @@ const Game = () => {
     totalScore += gameStats.puzzlesSolved * basePointsPerPuzzle;
     
     // Speed bonus calculation
-    const averageTimePerPuzzle = timer.seconds / PUZZLES.length;
+    const averageTimePerPuzzle = timer.seconds / currentPuzzleIndex;
     if (averageTimePerPuzzle < speedBonusThreshold) {
       const speedBonus = Math.floor((speedBonusThreshold - averageTimePerPuzzle) * 10);
       totalScore += speedBonus;
@@ -136,12 +167,20 @@ const Game = () => {
     
     if (isCorrect) {
       setFeedback({ isCorrect: true, isIncorrect: false });
+      setGameStats(prev => ({ ...prev, puzzlesSolved: prev.puzzlesSolved + 1 }));
       
       setMissionStatus(prev => {
         const newStatus = [...prev];
         newStatus[currentPuzzleIndex] = 'COMPLETE';
         return newStatus;
       });
+      
+      // Adaptive difficulty: increase difficulty if solved quickly without hints
+      const puzzleStartTime = timer.seconds - (currentPuzzleIndex * 120); // Rough estimate
+      if (puzzleStartTime < 60 && !showHint && currentDifficultyLevel < 5) {
+        setCurrentDifficultyLevel(prev => Math.min(prev + 1, 5));
+        setAtmosphericMessage(`Difficulty increased - Agent performance exceeds expectations`);
+      }
       
       // Show completion message
       const completionMsg = getCompletionMessage(currentPuzzleIndex);
@@ -166,13 +205,21 @@ const Game = () => {
   const handleSkip = () => {
     setGameStats(prev => ({ ...prev, puzzlesSkipped: prev.puzzlesSkipped + 1 }));
     
+    // Adaptive difficulty: decrease difficulty when skipping
+    if (currentDifficultyLevel > 1) {
+      setCurrentDifficultyLevel(prev => Math.max(prev - 1, 1));
+      setAtmosphericMessage('Difficulty adjusted - Providing tactical support');
+    }
+    
     setMissionStatus(prev => {
       const newStatus = [...prev];
       newStatus[currentPuzzleIndex] = 'BYPASSED';
       return newStatus;
     });
     
-    setAtmosphericMessage('Security layer bypassed - proceeding to next objective...');
+    if (currentDifficultyLevel === 1) {
+      setAtmosphericMessage('Security layer bypassed - proceeding to next objective...');
+    }
     
     const nextIndex = currentPuzzleIndex + 1;
     setCurrentPuzzleIndex(nextIndex);
@@ -199,8 +246,10 @@ const Game = () => {
   };
 
   const restartGame = () => {
-    setCurrentPuzzleIndex(-1);
+    setCurrentPuzzleIndex(0);
     setCurrentPuzzle(null);
+    setPuzzleQueue([]);
+    setCurrentDifficultyLevel(1);
     setGameState('waiting');
     setShowHint(false);
     setFeedback({ isCorrect: false, isIncorrect: false });
@@ -256,15 +305,15 @@ const Game = () => {
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                  <span>Breach Security Checkpoint Alpha (Caesar Cipher)</span>
+                  <span>Infiltrate Digital Facility (Multiple Security Layers)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                  <span>Access Central Database (Vigenère Cipher)</span>
+                  <span>Decode Encrypted Intelligence (Adaptive Difficulty)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                  <span>Override Vault Protocol (Symbol Substitution)</span>
+                  <span>Complete Deep Infiltration Mission</span>
                 </div>
               </div>
             </div>
